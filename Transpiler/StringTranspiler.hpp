@@ -15,36 +15,36 @@ class StringTranspiler {
     };
 
 private:
-    // Expresión regular para char array con inicialización de string literal
+    // Expresion regular para char array con inicializacion de string literal
     // Ejemplo: char str[] = "hello", char name[50] = "world"
     std::regex char_array_init_pattern{
         R"(\bchar\s+([A-Za-z_][A-Za-z0-9_]*)\s*\[\s*(\d*)\s*\]\s*=\s*("[^"]*"))"
     };
 
-    // Expresión regular para char pointer con inicialización de string literal
+    // Expresion regular para char pointer con inicializacion de string literal
     // Ejemplo: char* str = "hello"
     std::regex char_pointer_init_pattern{
         R"(\bchar\s*\*\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*("[^"]*"))"
     };
 
-    // Expresión regular para strcpy calls
+    // Expresion regular para strcpy calls
     // Ejemplo: strcpy(dest, "source"), strcpy(dest, src)
     std::regex strcpy_pattern{
         R"(\bstrcpy\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([^)]+)\s*\))"
     };
 
-    // Expresión regular para strcmp calls
+    // Expresion regular para strcmp calls
     // Ejemplo: strcmp(str1, str2), strcmp(str, "literal")
     std::regex strcmp_pattern{
         R"(\bstrcmp\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\))"
     };
 
-    // Expresión regular para detectar strings literales
+    // Expresion regular para detectar strings literales
     std::regex string_literal_pattern{
         R"("([^"\\]|\\.)*")"
     };
 
-    // Expresión regular para detectar comentarios
+    // Expresion regular para detectar comentarios
     std::regex comment_pattern{
         R"(//.*$|/\*.*?\*/)"
     };
@@ -97,19 +97,14 @@ private:
 std::string StringTranspiler::transpileFile(const std::string& content) {
     std::string result = content;
 
-    // Limpiar el set de strings convertidos
     converted_strings.clear();
 
-    // Agregar include de <string> si es necesario
     result = addStringInclude(result);
 
-    // Reemplazar #include <string.h> si existe
     result = replaceStringHeader(result);
 
-    // Transpilar declaraciones de strings
     result = transpileStringDeclarations(result);
 
-    // Transpilar operaciones strcpy y strcmp
     result = transpileStringOperations(result);
 
     return result;
@@ -118,9 +113,7 @@ std::string StringTranspiler::transpileFile(const std::string& content) {
 std::string StringTranspiler::addStringInclude(const std::string& content) {
     std::string result = content;
 
-    // Verificar si ya tiene #include <string>
     if (result.find("#include <string>") == std::string::npos) {
-        // Buscar la primera línea de include para insertar después
         std::regex include_pattern(R"(#include\s*[<"][^>"]*[>"])");
         std::smatch match;
 
@@ -129,7 +122,6 @@ std::string StringTranspiler::addStringInclude(const std::string& content) {
             result.insert(pos, "\n#include <string>");
         }
         else {
-            // Si no hay includes, agregar al inicio
             result = "#include <string>\n" + result;
         }
     }
@@ -140,7 +132,6 @@ std::string StringTranspiler::addStringInclude(const std::string& content) {
 std::string StringTranspiler::replaceStringHeader(const std::string& content) {
     std::string result = content;
 
-    // Reemplazar #include <string.h> con comentario
     result = std::regex_replace(result,
         std::regex(R"(#include\s*<string\.h>)"),
         "// #include <string.h> // Reemplazado por <string>");
@@ -175,22 +166,18 @@ std::string StringTranspiler::transpileStringOperations(const std::string& conte
 }
 
 std::string StringTranspiler::processStringDeclarationLine(const std::string& line) {
-    // Verificar si la línea contiene comentarios o strings literales
     if (containsStringLiteralOrComment(line)) {
         return processLineWithLiterals(line, true);
     }
 
-    // Procesar la línea directamente
     return processStringDeclarations(line);
 }
 
 std::string StringTranspiler::processStringOperationLine(const std::string& line) {
-    // Verificar si la línea contiene comentarios o strings literales
     if (containsStringLiteralOrComment(line)) {
         return processLineWithLiterals(line, false);
     }
 
-    // Procesar la línea directamente
     return processStringOperations(line);
 }
 
@@ -207,7 +194,6 @@ std::string StringTranspiler::processLineWithLiterals(const std::string& line, b
     size_t last_pos = 0;
 
     for (const auto& region : protected_regions) {
-        // Procesar la parte antes de la región protegida
         if (region.start > last_pos) {
             std::string segment = line.substr(last_pos, region.start - last_pos);
             if (isDeclaration) {
@@ -219,12 +205,10 @@ std::string StringTranspiler::processLineWithLiterals(const std::string& line, b
             processed_line += segment;
         }
 
-        // Agregar la región protegida sin cambios
         processed_line += line.substr(region.start, region.length);
         last_pos = region.start + region.length;
     }
 
-    // Procesar la parte restante
     if (last_pos < line.length()) {
         std::string segment = line.substr(last_pos);
         if (isDeclaration) {
@@ -242,10 +226,8 @@ std::string StringTranspiler::processLineWithLiterals(const std::string& line, b
 std::string StringTranspiler::processStringDeclarations(const std::string& line) {
     std::string result = line;
 
-    // Procesar char array con inicialización
     result = processCharArrayInit(result);
 
-    // Procesar char pointer con inicialización
     result = processCharPointerInit(result);
 
     return result;
@@ -254,10 +236,8 @@ std::string StringTranspiler::processStringDeclarations(const std::string& line)
 std::string StringTranspiler::processStringOperations(const std::string& line) {
     std::string result = line;
 
-    // Procesar strcpy calls
     result = processStrcpyCalls(result);
 
-    // Procesar strcmp calls
     result = processStrcmpCalls(result);
 
     return result;
@@ -272,7 +252,6 @@ std::string StringTranspiler::processCharArrayInit(const std::string& line) {
         std::string array_size = trim(match[2].str());
         std::string string_literal = match[3].str();
 
-        // Agregar la variable al set de strings convertidos
         converted_strings.insert(var_name);
 
         std::string replacement = "std::string " + var_name + " = " + string_literal +
@@ -294,7 +273,6 @@ std::string StringTranspiler::processCharPointerInit(const std::string& line) {
         std::string var_name = trim(match[1].str());
         std::string string_literal = match[2].str();
 
-        // Agregar la variable al set de strings convertidos
         converted_strings.insert(var_name);
 
         std::string replacement = "std::string " + var_name + " = " + string_literal +
@@ -316,7 +294,6 @@ std::string StringTranspiler::processStrcpyCalls(const std::string& line) {
         std::string dest = trim(match[1].str());
         std::string source = trim(match[2].str());
 
-        // Solo procesar si el destino es una variable convertida a std::string
         if (converted_strings.find(dest) != converted_strings.end()) {
             std::string replacement = dest + " = " + source + "; // Convertido de strcpy";
 
@@ -337,12 +314,10 @@ std::string StringTranspiler::processStrcmpCalls(const std::string& line) {
         std::string str1 = trim(match[1].str());
         std::string str2 = trim(match[2].str());
 
-        // Verificar si al menos una de las variables es std::string convertido
         bool str1_converted = converted_strings.find(str1) != converted_strings.end();
         bool str2_converted = converted_strings.find(str2) != converted_strings.end();
 
         if (str1_converted || str2_converted) {
-            // Determinar el operador de comparación basado en el contexto
             std::string comparison_op = determineComparisonOperator(result, match.position());
             std::string replacement = "(" + str1 + " " + comparison_op + " " + str2 + ")";
 
@@ -356,20 +331,18 @@ std::string StringTranspiler::processStrcmpCalls(const std::string& line) {
 }
 
 std::string StringTranspiler::determineComparisonOperator(const std::string& line, size_t strcmp_pos) {
-    // Buscar hacia atrás para encontrar el operador de comparación
     if (strcmp_pos > 0) {
         std::string before = line.substr(0, strcmp_pos);
 
-        // Buscar patrones comunes de comparación
         if (before.find("== 0") != std::string::npos ||
             before.find("!= 0") != std::string::npos) {
-            return "=="; // strcmp(a, b) == 0 -> a == b
+            return "=="; 
         }
         if (before.find("< 0") != std::string::npos) {
-            return "<";  // strcmp(a, b) < 0 -> a < b
+            return "<";  
         }
         if (before.find("> 0") != std::string::npos) {
-            return ">";  // strcmp(a, b) > 0 -> a > b
+            return ">";  
         }
         if (before.find("<=") != std::string::npos) {
             return "<=";
@@ -379,8 +352,7 @@ std::string StringTranspiler::determineComparisonOperator(const std::string& lin
         }
     }
 
-    // Buscar hacia adelante para patrones como strcmp() == 0
-    size_t after_pos = strcmp_pos + 6; // longitud de "strcmp"
+    size_t after_pos = strcmp_pos + 6; 
     if (after_pos < line.length()) {
         std::string after = line.substr(after_pos);
         if (after.find("== 0") != std::string::npos) {
@@ -397,14 +369,12 @@ std::string StringTranspiler::determineComparisonOperator(const std::string& lin
         }
     }
 
-    // Por defecto, asumir comparación de igualdad
     return "==";
 }
 
 std::vector<StringTranspiler::StringRegion> StringTranspiler::findProtectedRegions(const std::string& line) {
     std::vector<StringRegion> regions;
 
-    // Encontrar strings literales (pero no protegerlos completamente para declaraciones)
     std::sregex_iterator iter(line.begin(), line.end(), comment_pattern);
     std::sregex_iterator end;
 
@@ -413,7 +383,6 @@ std::vector<StringTranspiler::StringRegion> StringTranspiler::findProtectedRegio
         regions.emplace_back(match.position(), match.length());
     }
 
-    // Ordenar regiones por posición
     std::sort(regions.begin(), regions.end(),
         [](const StringRegion& a, const StringRegion& b) {
             return a.start < b.start;

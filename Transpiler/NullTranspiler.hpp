@@ -13,23 +13,23 @@ class NullTranspiler {
     };
 
 private:
-    // Expresi�n regular para capturar NULL como palabra completa
+    // Expresion regular para capturar NULL como palabra completa
     // Evita reemplazar NULL dentro de strings o como parte de otras palabras
     std::regex null_pattern{
         R"(\bNULL\b)"
     };
 
-    // Expresi�n regular para detectar strings literales (para evitar reemplazar NULL dentro de ellos)
+    // Expresion regular para detectar strings literales (para evitar reemplazar NULL dentro de ellos)
     std::regex string_literal_pattern{
         R"("([^"\\]|\\.)*")"
     };
 
-    // Expresi�n regular para detectar comentarios de l�nea
+    // Expresion regular para detectar comentarios de linea
     std::regex line_comment_pattern{
         R"(//.*$)"
     };
 
-    // Expresi�n regular para detectar comentarios de bloque
+    // Expresion regular para detectar comentarios de bloque
     std::regex block_comment_pattern{
         R"(/\*.*?\*/)"
     };
@@ -56,7 +56,6 @@ private:
 std::string NullTranspiler::transpileFile(const std::string& content) {
     std::string result = content;
 
-    // Transpilar NULL statements
     result = transpileNullStatements(result);
 
     return result;
@@ -64,7 +63,6 @@ std::string NullTranspiler::transpileFile(const std::string& content) {
 
 std::string NullTranspiler::transpileNullStatements(const std::string& content)
 {
-    // Procesar l�nea por l�nea para mejor control
     std::istringstream iss(content);
     std::string line;
     std::string processed_content;
@@ -79,12 +77,10 @@ std::string NullTranspiler::transpileNullStatements(const std::string& content)
 
 std::string NullTranspiler::processNullLine(const std::string& line)
 {
-    // Verificar si la l�nea contiene comentarios o strings literales
     if (containsStringLiteralOrComment(line)) {
         return processLineWithLiterals(line);
     }
 
-    // Si no hay strings literales ni comentarios, procesar directamente
     return std::regex_replace(line, null_pattern, "nullptr");
 }
 
@@ -92,12 +88,10 @@ bool NullTranspiler::containsStringLiteralOrComment(const std::string& line)
 {
     std::smatch match;
 
-    // Verificar si contiene string literales
     if (std::regex_search(line, match, string_literal_pattern)) {
         return true;
     }
 
-    // Verificar si contiene comentarios
     if (std::regex_search(line, match, line_comment_pattern) ||
         std::regex_search(line, match, block_comment_pattern)) {
         return true;
@@ -111,24 +105,20 @@ std::string NullTranspiler::processLineWithLiterals(const std::string& line)
     std::string result = line;
     std::vector<NullTranspiler::StringRegion> protected_regions = findProtectedRegions(line);
 
-    // Procesar la l�nea evitando las regiones protegidas
     std::string processed_line;
     size_t last_pos = 0;
 
     for (const auto& region : protected_regions) {
-        // Procesar la parte antes de la regi�n protegida
         if (region.start > last_pos) {
             std::string segment = line.substr(last_pos, region.start - last_pos);
             segment = std::regex_replace(segment, null_pattern, "nullptr");
             processed_line += segment;
         }
 
-        // Agregar la regi�n protegida sin cambios
         processed_line += line.substr(region.start, region.length);
         last_pos = region.start + region.length;
     }
 
-    // Procesar la parte restante
     if (last_pos < line.length()) {
         std::string segment = line.substr(last_pos);
         segment = std::regex_replace(segment, null_pattern, "nullptr");
@@ -142,7 +132,6 @@ std::vector<NullTranspiler::StringRegion> NullTranspiler::findProtectedRegions(c
 {
     std::vector<StringRegion> regions;
 
-    // Encontrar strings literales
     std::sregex_iterator string_iter(line.begin(), line.end(), string_literal_pattern);
     std::sregex_iterator string_end;
 
@@ -151,7 +140,6 @@ std::vector<NullTranspiler::StringRegion> NullTranspiler::findProtectedRegions(c
         regions.emplace_back(match.position(), match.length());
     }
 
-    // Encontrar comentarios de l�nea
     std::sregex_iterator comment_iter(line.begin(), line.end(), line_comment_pattern);
     std::sregex_iterator comment_end;
 
@@ -160,7 +148,6 @@ std::vector<NullTranspiler::StringRegion> NullTranspiler::findProtectedRegions(c
         regions.emplace_back(match.position(), match.length());
     }
 
-    // Encontrar comentarios de bloque
     std::sregex_iterator block_iter(line.begin(), line.end(), block_comment_pattern);
     std::sregex_iterator block_end;
 
@@ -169,7 +156,6 @@ std::vector<NullTranspiler::StringRegion> NullTranspiler::findProtectedRegions(c
         regions.emplace_back(match.position(), match.length());
     }
 
-    // Ordenar regiones por posici�n
     std::sort(regions.begin(), regions.end(),
         [](const NullTranspiler::StringRegion& a, const NullTranspiler::StringRegion& b) {
             return a.start < b.start;

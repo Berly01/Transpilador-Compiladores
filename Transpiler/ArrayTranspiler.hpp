@@ -13,8 +13,6 @@ class ArrayTranspiler {
     };
 
 private:
-    // Expresión regular para capturar declaraciones de arreglos con tamaño fijo
-    // Ejemplo: int arr[10], float data[5], char buffer[256]
     std::regex array_declaration_pattern{
         R"(([A-Za-z_][A-Za-z0-9_]*\s+\*?\s*)([A-Za-z_][A-Za-z0-9_]*)\s*\[\s*(\d+)\s*\])"
     };
@@ -88,10 +86,8 @@ private:
 std::string ArrayTranspiler::transpileFile(const std::string& content) {
     std::string result = content;
 
-    // Agregar include de <array> si es necesario
     result = addArrayInclude(result);
 
-    // Transpilar declaraciones de arreglos
     result = transpileArrayDeclarations(result);
 
     return result;
@@ -100,9 +96,7 @@ std::string ArrayTranspiler::transpileFile(const std::string& content) {
 std::string ArrayTranspiler::addArrayInclude(const std::string& content) {
     std::string result = content;
 
-    // Verificar si ya tiene #include <array>
     if (result.find("#include <array>") == std::string::npos) {
-        // Buscar la primera línea de include para insertar después
         std::regex include_pattern(R"(#include\s*[<"][^>"]*[>"])");
         std::smatch match;
 
@@ -111,7 +105,6 @@ std::string ArrayTranspiler::addArrayInclude(const std::string& content) {
             result.insert(pos, "\n#include <array>");
         }
         else {
-            // Si no hay includes, agregar al inicio
             result = "#include <array>\n" + result;
         }
     }
@@ -133,12 +126,10 @@ std::string ArrayTranspiler::transpileArrayDeclarations(const std::string& conte
 }
 
 std::string ArrayTranspiler::processArrayLine(const std::string& line) {
-    // Verificar si la línea contiene comentarios o strings literales
     if (containsStringLiteralOrComment(line)) {
         return processLineWithLiterals(line);
     }
 
-    // Procesar la línea directamente
     return processArrayDeclarations(line);
 }
 
@@ -155,19 +146,16 @@ std::string ArrayTranspiler::processLineWithLiterals(const std::string& line) {
     size_t last_pos = 0;
 
     for (const auto& region : protected_regions) {
-        // Procesar la parte antes de la región protegida
         if (region.start > last_pos) {
             std::string segment = line.substr(last_pos, region.start - last_pos);
             segment = processArrayDeclarations(segment);
             processed_line += segment;
         }
 
-        // Agregar la región protegida sin cambios
         processed_line += line.substr(region.start, region.length);
         last_pos = region.start + region.length;
     }
 
-    // Procesar la parte restante
     if (last_pos < line.length()) {
         std::string segment = line.substr(last_pos);
         segment = processArrayDeclarations(segment);
@@ -180,16 +168,12 @@ std::string ArrayTranspiler::processLineWithLiterals(const std::string& line) {
 std::string ArrayTranspiler::processArrayDeclarations(const std::string& line) {
     std::string result = line;
 
-    // Procesar declaraciones con inicialización automática de tamaño primero
     result = processAutoInitArrays(result);
 
-    // Procesar declaraciones con inicialización explícita
     result = processInitializedArrays(result);
 
-    // Procesar múltiples declaraciones en una línea
     result = processMultipleArrays(result);
 
-    // Procesar declaraciones simples
     result = processSimpleArrays(result);
 
     return result;
@@ -204,7 +188,6 @@ std::string ArrayTranspiler::processAutoInitArrays(const std::string& line) {
         std::string name = trim(match[2].str());
         std::string initializer = match[3].str();
 
-        // Contar elementos en el inicializador
         int size = countInitializerElements(initializer);
 
         std::string replacement = "std::array<" + type + ", " + std::to_string(size) + "> " +
@@ -266,7 +249,6 @@ std::string ArrayTranspiler::processSimpleArrays(const std::string& line) {
         std::string name = trim(match[2].str());
         std::string size = match[3].str();
 
-        // Verificar que no sea parte de una declaración ya procesada
         if (!isPartOfProcessedDeclaration(result, match.position())) {
             std::string replacement = "std::array<" + type + ", " + size + "> " +
                 name + "; // Convertido de arreglo C";
@@ -318,7 +300,6 @@ int ArrayTranspiler::countInitializerElements(const std::string& initializer) {
 }
 
 bool ArrayTranspiler::isPartOfProcessedDeclaration(const std::string& line, size_t pos) {
-    // Buscar hacia atrás para ver si ya hay "std::array" antes de esta posición
     if (pos > 0) {
         std::string before = line.substr(0, pos);
         return before.find("std::array") != std::string::npos;
@@ -329,7 +310,6 @@ bool ArrayTranspiler::isPartOfProcessedDeclaration(const std::string& line, size
 std::vector<ArrayTranspiler::StringRegion> ArrayTranspiler::findProtectedRegions(const std::string& line) {
     std::vector<ArrayTranspiler::StringRegion> regions;
 
-    // Encontrar strings literales y comentarios
     std::sregex_iterator iter(line.begin(), line.end(), string_literal_pattern);
     std::sregex_iterator end;
 
@@ -344,7 +324,6 @@ std::vector<ArrayTranspiler::StringRegion> ArrayTranspiler::findProtectedRegions
         regions.emplace_back(match.position(), match.length());
     }
 
-    // Ordenar regiones por posición
     std::sort(regions.begin(), regions.end(),
         [](const StringRegion& a, const StringRegion& b) {
             return a.start < b.start;

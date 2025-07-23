@@ -8,7 +8,7 @@
 
 class PrintfTranspiler {
 private:
-    // Expresión regular para capturar printf con formato y argumentos
+    // Expresion regular para capturar printf con formato y argumentos
     std::regex printf_pattern{
         "printf\\s*\\(\\s*\"([^\"]*)\"\\s*(?:,\\s*([^)]*))?\\s*\\)"
     };
@@ -53,10 +53,8 @@ private:
 
 std::string PrintfTranspiler::transpileFile(const std::string& content)
 {
-    // Agregar includes necesarios al inicio
     std::string result = addIncludes(content);
 
-    // Transpilar printf statements
     result = transpilePrintfStatements(result);
 
     return result;
@@ -66,9 +64,7 @@ std::string PrintfTranspiler::addIncludes(const std::string& content)
 {
     std::string result = content;
 
-    // Verificar si ya tiene #include <iostream>
     if (result.find("#include <iostream>") == std::string::npos) {
-        // Buscar la primera línea de include para insertar después
         std::regex include_pattern(R"(#include\s*[<"][^>"]*[>"])");
         std::smatch match;
 
@@ -77,12 +73,10 @@ std::string PrintfTranspiler::addIncludes(const std::string& content)
             result.insert(pos, "\n#include <iostream>");
         }
         else {
-            // Si no hay includes, agregar al inicio
             result = "#include <iostream>\n" + result;
         }
     }
 
-    // Reemplazar #include <stdio.h> si existe
     result = std::regex_replace(result,
         std::regex(R"(#include\s*<stdio\.h>)"),
         "// #include <stdio.h> // Reemplazado por <iostream>");
@@ -101,7 +95,6 @@ std::string PrintfTranspiler::transpilePrintfStatements(const std::string& conte
 
         std::string cout_statement = convertToCout(format_string, arguments);
 
-        // Reemplazar la primera ocurrencia encontrada
         size_t pos = match.position();
         size_t len = match.length();
         result.replace(pos, len, cout_statement);
@@ -118,17 +111,15 @@ std::string PrintfTranspiler::convertToCout(const std::string& format, const std
         return result + ";";
     }
 
-    // Dividir argumentos por comas (simplificado)
     std::vector<std::string> arguments = splitArguments(args);
 
-    // Procesar el string de formato
     std::string processed_format = processFormatString(format, arguments);
 
     if (!processed_format.empty()) {
         result += " << " + processed_format;
     }
 
-    return result /*+ ";"*/;
+    return result;
 }
 
 std::vector<std::string> PrintfTranspiler::splitArguments(const std::string& args)
@@ -137,11 +128,9 @@ std::vector<std::string> PrintfTranspiler::splitArguments(const std::string& arg
     if (args.empty()) return result;
 
     std::string trimmed = args;
-    // Eliminar espacios al inicio y final
     trimmed.erase(0, trimmed.find_first_not_of(" \t"));
     trimmed.erase(trimmed.find_last_not_of(" \t") + 1);
 
-    // División simple por comas (no maneja comas dentro de strings)
     std::stringstream ss(trimmed);
     std::string item;
 
@@ -169,14 +158,12 @@ std::string PrintfTranspiler::processFormatString(const std::string& format, con
     size_t last_pos = 0;
 
     while (std::regex_search(current_format, match, format_spec)) {
-        // Agregar texto literal antes del especificador
         std::string literal = current_format.substr(last_pos, match.position());
         if (!literal.empty()) {
             if (!result.empty()) result += " << ";
             result += "\"" + literal + "\"";
         }
 
-        // Agregar el argumento correspondiente
         if (arg_index < args.size()) {
             if (!result.empty()) result += " << ";
 
@@ -202,7 +189,6 @@ std::string PrintfTranspiler::processFormatString(const std::string& format, con
         last_pos = 0;
     }
 
-    // Agregar texto restante
     if (!current_format.empty()) {
         if (!result.empty()) result += " << ";
         result += "\"" + current_format + "\"";
