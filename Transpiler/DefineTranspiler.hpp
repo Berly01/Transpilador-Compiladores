@@ -4,17 +4,17 @@
 
 class DefineTranspiler {
 private:
-    // Expresión regular para capturar #define con diferentes patrones
+    // Expresion regular para capturar #define con diferentes patrones
     std::regex define_pattern{
         R"(#define\s+([A-Za-z_][A-Za-z0-9_]*)\s+(.+))"
     };
 
-    // Expresión regular para #define sin valor (solo nombre)
+    // Expresion regular para #define sin valor (solo nombre)
     std::regex define_no_value_pattern{
         R"(#define\s+([A-Za-z_][A-Za-z0-9_]*)\s*$)"
     };
 
-    // Expresión regular para #define con parámetros (macros función)
+    // Expresion regular para #define con parametros (macros funcion)
     std::regex define_function_pattern{
         R"(#define\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)\s+(.+))"
     };

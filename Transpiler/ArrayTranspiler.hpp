@@ -17,30 +17,30 @@ private:
         R"(([A-Za-z_][A-Za-z0-9_]*\s+\*?\s*)([A-Za-z_][A-Za-z0-9_]*)\s*\[\s*(\d+)\s*\])"
     };
 
-    // Expresión regular para declaraciones con inicialización
+    // Expresion regular para declaraciones con inicialización
     // Ejemplo: int arr[5] = {1, 2, 3, 4, 5}
     std::regex array_init_pattern{
         R"(([A-Za-z_][A-Za-z0-9_]*\s+\*?\s*)([A-Za-z_][A-Za-z0-9_]*)\s*\[\s*(\d+)\s*\]\s*=\s*(\{[^}]*\}))"
     };
 
-    // Expresión regular para declaraciones con inicialización automática de tamaño
+    // Expresion regular para declaraciones con inicializacion automática de tamaño
     // Ejemplo: int arr[] = {1, 2, 3, 4, 5}
     std::regex array_auto_init_pattern{
         R"(([A-Za-z_][A-Za-z0-9_]*\s+\*?\s*)([A-Za-z_][A-Za-z0-9_]*)\s*\[\s*\]\s*=\s*(\{[^}]*\}))"
     };
 
-    // Expresión regular para múltiples declaraciones en una línea
+    // Expresion regular para múltiples declaraciones en una linea
     // Ejemplo: int a[10], b[20], c[30];
     std::regex multi_array_pattern{
         R"(([A-Za-z_][A-Za-z0-9_]*\s+)([A-Za-z_][A-Za-z0-9_]*\s*\[\s*\d+\s*\](?:\s*,\s*[A-Za-z_][A-Za-z0-9_]*\s*\[\s*\d+\s*\])*)\s*;)"
     };
 
-    // Expresión regular para detectar strings literales
+    // Expresion regular para detectar strings literales
     std::regex string_literal_pattern{
         R"("([^"\\]|\\.)*")"
     };
 
-    // Expresión regular para detectar comentarios
+    // Expresion regular para detectar comentarios
     std::regex comment_pattern{
         R"(//.*$|/\*.*?\*/)"
     };
