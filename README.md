@@ -1,5 +1,14 @@
 # Transpilador-Compiladores
 
+Programa en C que implementa una lista dinámica de enteros usando:
+
+* Macros #define para constantes
+* Manejo manual de memoria con malloc/realloc/free
+* Punteros y aritmética de punteros
+* I/O con printf de la biblioteca estándar de C
+* Gestión explícita del tamaño de la lista mediante punteros
+
+
 ## Entrada (Codigo C)
 ```c
 #include <stdio.h>
@@ -62,6 +71,15 @@ int main() {
 ```
 
 ## Transpilacion Fase 1 (Regex)
+
+El transpilador basado en reglas realiza conversiones sintácticas directas:
+
+* #include <stdio.h> a #include <iostream>
+* #define a constexpr int
+* printf a std::cout
+* NULL a nullptr
+* Mantiene la lógica de C: sigue usando realloc(), free(), punteros y manejo manual de memoria
+
 ```cpp
 // #include <stdio.h> // Reemplazado por <iostream>
 #include <iostream>
@@ -126,6 +144,15 @@ int main() {
 ```
 
 ## Transpilacion Fase 2 (LLM)
+
+El modelo realiza una transformación semántica profunda:
+
+* Cambio de paradigma: De punteros a contenedores STL (vector<int>)
+* Eliminación de memoria manual: Reemplaza realloc/free con gestión automática
+* Simplificación de funciones: add_to_list() usa push_back() nativo
+* Modernización: Agrega using namespace std y headers C++ apropiados
+* Funcionalidad preservada: El comportamiento del programa permanece idéntico
+
 ```cpp
 #include <iostream>
 #include <string>
